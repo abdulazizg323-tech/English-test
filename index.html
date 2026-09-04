@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختبار مستوى الإنجليزية</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --accent:#38bdf8;
+    --accent2:#22c55e;
+    --danger:#ef4444;
+    --text:#e2e8f0;
+    --muted:#94a3b8;
+    --border:#334155;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Tahoma, Arial, sans-serif;
+    background:linear-gradient(160deg,#0f172a,#1e293b);
+    color:var(--text);
+    min-height:100vh;
+    padding:20px;
+  }
+  .wrap{max-width:680px;margin:0 auto;}
+  header{text-align:center;margin-bottom:24px;}
+  header h1{font-size:26px;margin-bottom:6px;}
+  header p{color:var(--muted);font-size:14px;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:16px;
+  }
+
+  /* Level selection grid */
+  .levels-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+  }
+  .level-btn{
+    background:#0f172a;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 10px;
+    text-align:center;
+    cursor:pointer;
+    transition:.15s;
+    color:var(--text);
+  }
+  .level-btn:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .level-btn .lvl{font-size:22px;font-weight:700;color:var(--accent);}
+  .level-btn .lvl-name{font-size:12px;color:var(--muted);margin-top:4px;}
+  .level-btn .badge{
+    margin-top:8px;font-size:11px;padding:2px 8px;border-radius:20px;display:inline-block;
+  }
+  .badge.done{background:rgba(34,197,94,.15);color:var(--accent2);}
+
+  /* Quiz screen */
+  .progress-bar{
+    height:6px;background:#0f172a;border-radius:10px;overflow:hidden;margin-bottom:18px;
+  }
+  .progress-fill{height:100%;background:var(--accent);transition:width .3s;}
+
+  .q-count{font-size:13px;color:var(--muted);margin-bottom:6px;}
+  .question{font-size:18px;margin-bottom:18px;line-height:1.5;direction:ltr;text-align:left;}
+
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{
+    background:#0f172a;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:13px 14px;
+    cursor:pointer;
+    font-size:15px;
+    direction:ltr;
+    text-align:left;
+    transition:.15s;
+    color:var(--text);
+  }
+  .opt:hover{border-color:var(--accent);}
+  .opt.selected{border-color:var(--accent);background:rgba(56,189,248,.12);}
+  .opt.correct{border-color:var(--accent2);background:rgba(34,197,94,.15);}
+  .opt.wrong{border-color:var(--danger);background:rgba(239,68,68,.15);}
+  .opt.disabled{pointer-events:none;}
+
+  .nav-row{display:flex;justify-content:space-between;margin-top:20px;gap:10px;}
+  button.primary{
+    background:var(--accent);
+    color:#0f172a;
+    border:none;
+    padding:12px 22px;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+    font-size:15px;
+  }
+  button.primary:disabled{opacity:.4;cursor:not-allowed;}
+  button.secondary{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:12px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:14px;
+  }
+
+  /* Results */
+  .result-score{
+    font-size:48px;font-weight:800;text-align:center;color:var(--accent);margin:10px 0;
+  }
+  .result-label{text-align:center;font-size:16px;color:var(--muted);margin-bottom:18px;}
+  .result-verdict{
+    text-align:center;padding:14px;border-radius:12px;font-size:15px;margin-bottom:18px;
+  }
+  .verdict-pass{background:rgba(34,197,94,.15);color:var(--accent2);border:1px solid rgba(34,197,94,.4);}
+  .verdict-fail{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.4);}
+
+  .review-item{
+    border-bottom:1px solid var(--border);
+    padding:12px 0;
+    direction:ltr;text-align:left;
+    font-size:14px;
+  }
+  .review-item:last-child{border-bottom:none;}
+  .review-q{margin-bottom:6px;color:var(--text);}
+  .review-your{color:var(--danger);}
+  .review-correct{color:var(--accent2);}
+
+  .hidden{display:none;}
+  .back-link{color:var(--muted);cursor:pointer;font-size:14px;margin-bottom:10px;display:inline-block;}
+  .back-link:hover{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📘 اختبار مستوى الإنجليزية</h1>
+    <p>اختار مستوى وابدأ اختباره لوحده — كل مستوى مستقل بنتيجته الخاصة</p>
+  </header>
+
+  <!-- SCREEN 1: Level selection -->
+  <div id="screen-select" class="card">
+    <div class="levels-grid" id="levelsGrid"></div>
+  </div>
+
+  <!-- SCREEN 2: Quiz -->
+  <div id="screen-quiz" class="card hidden">
+    <span class="back-link" onclick="goHome()">← رجوع للمستويات</span>
+    <div class="q-count" id="qCount"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="question" id="questionText"></div>
+    <div class="options" id="optionsList"></div>
+    <div class="nav-row">
+      <button class="secondary" onclick="goHome()">إلغاء</button>
+      <button class="primary" id="nextBtn" disabled onclick="nextQuestion()">التالي</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Results -->
+  <div id="screen-result" class="card hidden">
+    <span class="back-link" onclick="goHome()">← رجوع للمستويات</span>
+    <div class="result-score" id="scoreText"></div>
+    <div class="result-label" id="scoreLabel"></div>
+    <div class="result-verdict" id="verdictBox"></div>
+    <div id="reviewList"></div>
+    <div class="nav-row">
+      <button class="secondary" onclick="goHome()">رجوع للمستويات</button>
+      <button class="primary" onclick="retryLevel()">إعادة نفس المستوى</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= QUESTION BANK (per CEFR level, independent) ================= */
+const QUESTIONS = {
+  A1: {
+    name: "مبتدئ",
+    pass: 60,
+    items: [
+      {q:"I ___ a student.", opts:["am","is","are","be"], a:0},
+      {q:"She ___ from Egypt.", opts:["am","is","are","be"], a:1},
+      {q:"They ___ my friends.", opts:["is","am","are","be"], a:2},
+      {q:"This is ___ apple.", opts:["a","an","the","-"], a:1},
+      {q:"There ___ two cats in the room.", opts:["is","am","are","be"], a:2},
+      {q:"He works ___ a bank.", opts:["in","at","on","-"], a:1},
+      {q:"What ___ your name?", opts:["is","are","am","be"], a:0},
+      {q:"I don't ___ coffee.", opts:["likes","like","liking","liked"], a:1},
+      {q:"We ___ TV every evening.", opts:["watch","watches","watching","watched"], a:0},
+      {q:"Choose the correct plural: one book, two ___", opts:["book","books","bookes","booken"], a:1},
+    ]
+  },
+  A2: {
+    name: "أساسي",
+    pass: 60,
+    items: [
+      {q:"I ___ to the cinema yesterday.", opts:["go","went","goes","going"], a:1},
+      {q:"She is ___ than her brother.", opts:["tall","taller","tallest","more tall"], a:1},
+      {q:"There isn't ___ milk in the fridge.", opts:["some","any","a","an"], a:1},
+      {q:"He ___ football every Friday.", opts:["play","plays","playing","played"], a:1},
+      {q:"Can you tell me ___ the station is?", opts:["where","what","who","why"], a:0},
+      {q:"I have ___ finished my homework.", opts:["already","yet","still","ago"], a:0},
+      {q:"They are going to ___ a new house.", opts:["buy","bought","buys","buying"], a:0},
+      {q:"You ___ smoke here, it's not allowed.", opts:["must","mustn't","can","should"], a:1},
+      {q:"This is the ___ movie I've ever seen.", opts:["good","better","best","goodest"], a:2},
+      {q:"If it rains, I ___ stay home.", opts:["will","would","was","did"], a:0},
+    ]
+  },
+  B1: {
+    name: "متوسط",
+    pass: 60,
+    items: [
+      {q:"By the time we arrived, the film ___ already started.", opts:["has","had","was","is"], a:1},
+      {q:"I wish I ___ more time to study.", opts:["have","had","has","having"], a:1},
+      {q:"The report ___ by the manager tomorrow.", opts:["will review","will be reviewed","is reviewing","reviews"], a:1},
+      {q:"She's used to ___ up early.", opts:["wake","waking","woke","wakes"], a:1},
+      {q:"Despite ___ hard, he failed the exam.", opts:["study","studying","studied","to study"], a:1},
+      {q:"If I ___ you, I would apologize.", opts:["am","was","were","be"], a:2},
+      {q:"He suggested ___ the meeting to Monday.", opts:["move","to move","moving","moved"], a:2},
+      {q:"The book, ___ I borrowed from the library, is excellent.", opts:["that","which","who","what"], a:1},
+      {q:"I haven't seen him ___ last year.", opts:["for","since","during","ago"], a:1},
+      {q:"You'd better ___ an umbrella; it might rain.", opts:["take","to take","taking","took"], a:0},
+    ]
+  },
+  B2: {
+    name: "متوسط-متقدم",
+    pass: 60,
+    items: [
+      {q:"Not only ___ late, but he also forgot the documents.", opts:["he was","was he","he is","is he"], a:1},
+      {q:"She would have passed the test if she ___ harder.", opts:["studied","had studied","studies","would study"], a:1},
+      {q:"It's high time we ___ a decision.", opts:["make","made","making","have made"], a:1},
+      {q:"He denied ___ the money.", opts:["to steal","stealing","steal","stolen"], a:1},
+      {q:"Hardly ___ arrived when the phone rang.", opts:["I had","had I","I have","have I"], a:1},
+      {q:"The project was completed ___ schedule.", opts:["ahead of","before of","previous to","ahead from"], a:0},
+      {q:"He is said ___ a fortune abroad.", opts:["to have made","to make","having made","make"], a:0},
+      {q:"Choose the correct: 'The more you practice, ___'", opts:["you get better","the better you get","better you get","you better get"], a:1},
+      {q:"I'd rather you ___ that right now.", opts:["don't do","didn't do","won't do","not do"], a:1},
+      {q:"She's the kind of person who ___ up easily.", opts:["never gives","never give","doesn't gives","don't give"], a:0},
+    ]
+  },
+  C1: {
+    name: "متقدم",
+    pass: 60,
+    items: [
+      {q:"Rarely ___ such dedication in a new employee.", opts:["we have seen","have we seen","we seen","did we saw"], a:1},
+      {q:"Were it not for his support, the project ___ failed.", opts:["would have","will have","would","had"], a:0},
+      {q:"The findings, ___ groundbreaking, were met with skepticism.", opts:["despite","although","while","albeit"], a:3},
+      {q:"He came across ___ arrogant during the interview.", opts:["as","like","to be","for"], a:0},
+      {q:"No sooner ___ than the storm began.", opts:["we had left","had we left","we left","we have left"], a:1},
+      {q:"She has a tendency to ___ on minor details.", opts:["dwell","dwelling","dwelt","dwells"], a:0},
+      {q:"His argument, ___ compelling, lacked solid evidence.", opts:["while","despite","because","so"], a:0},
+      {q:"The committee's decision was met with widespread ___.", opts:["disapprove","disapproval","disapproving","disapproved"], a:1},
+      {q:"Had I known earlier, I ___ differently.", opts:["would act","would have acted","will act","acted"], a:1},
+      {q:"It goes without saying that discipline ___ success.", opts:["underlie","underlies","underlying","underlied"], a:1},
+    ]
+  },
+  C2: {
+    name: "احترافي",
+    pass: 60,
+    items: [
+      {q:"So dire ___ the situation that emergency measures were enacted immediately.", opts:["was","were","had been","is"], a:0},
+      {q:"Little ___ they anticipate the repercussions of their decision.", opts:["did","had","have","were"], a:0},
+      {q:"The novel's prose is nothing short of ___.", opts:["masterful","mastery","mastering","mastered"], a:0},
+      {q:"He remained impervious ___ criticism throughout his career.", opts:["to","of","from","against"], a:0},
+      {q:"Seldom does one encounter such ___ eloquence.", opts:["unmitigated","unmitigating","mitigate","mitigated"], a:0},
+      {q:"The proposal was met with an air of ___ skepticism.", opts:["barely concealed","conceal barely","barely concealing","concealed barely"], a:0},
+      {q:"Only in retrospect ___ the gravity of the mistake apparent.", opts:["became","did become","becomes","was become"], a:0},
+      {q:"His speech was replete ___ rhetorical flourishes.", opts:["with","of","in","for"], a:0},
+      {q:"The ramifications of the policy are yet to be fully ___.", opts:["ascertained","ascertain","ascertaining","ascertains"], a:0},
+      {q:"Such was the intensity of the debate ___ order had to be restored twice.", opts:["that","which","as","so"], a:0},
+    ]
+  }
+};
+
+/* ================= STATE ================= */
+let currentLevel = null;
+let currentIndex = 0;
+let selectedAnswer = null;
+let userAnswers = [];
+
+/* ================= RENDER LEVEL GRID ================= */
+function buildLevelsGrid(){
+  const grid = document.getElementById('levelsGrid');
+  grid.innerHTML = '';
+  Object.keys(QUESTIONS).forEach(lvl=>{
+    const data = QUESTIONS[lvl];
+    const div = document.createElement('div');
+    div.className = 'level-btn';
+    div.onclick = () => startLevel(lvl);
+    div.innerHTML = `
+      <div class="lvl">${lvl}</div>
+      <div class="lvl-name">${data.name}</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+/* ================= NAVIGATION ================= */
+function goHome(){
+  document.getElementById('screen-select').classList.remove('hidden');
+  document.getElementById('screen-quiz').classList.add('hidden');
+  document.getElementById('screen-result').classList.add('hidden');
+  currentLevel = null;
+}
+
+function startLevel(lvl){
+  currentLevel = lvl;
+  currentIndex = 0;
+  userAnswers = [];
+  document.getElementById('screen-select').classList.add('hidden');
+  document.getElementById('screen-result').classList.add('hidden');
+  document.getElementById('screen-quiz').classList.remove('hidden');
+  renderQuestion();
+}
+
+function retryLevel(){
+  startLevel(currentLevel);
+}
+
+function renderQuestion(){
+  const items = QUESTIONS[currentLevel].items;
+  const item = items[currentIndex];
+  selectedAnswer = null;
+
+  document.getElementById('qCount').textContent = `المستوى ${currentLevel} — سؤال ${currentIndex+1} من ${items.length}`;
+  document.getElementById('progressFill').style.width = `${(currentIndex/items.length)*100}%`;
+  document.getElementById('questionText').textContent = item.q;
+
+  const list = document.getElementById('optionsList');
+  list.innerHTML = '';
+  item.opts.forEach((opt, i)=>{
+    const div = document.createElement('div');
+    div.className = 'opt';
+    div.textContent = opt;
+    div.onclick = () => selectOption(i, div);
+    list.appendChild(div);
+  });
+
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('nextBtn').textContent = (currentIndex === items.length-1) ? 'إنهاء الاختبار' : 'التالي';
+}
+
+function selectOption(i, el){
+  if(selectedAnswer !== null) return; // already answered
+  selectedAnswer = i;
+  const item = QUESTIONS[currentLevel].items[currentIndex];
+  const opts = document.querySelectorAll('#optionsList .opt');
+  opts.forEach((o, idx)=>{
+    o.classList.add('disabled');
+    if(idx === item.a) o.classList.add('correct');
+    else if(idx === i) o.classList.add('wrong');
+  });
+  userAnswers.push({index: currentIndex, chosen: i, correct: item.a, isCorrect: i===item.a});
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion(){
+  const items = QUESTIONS[currentLevel].items;
+  if(currentIndex < items.length-1){
+    currentIndex++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function showResults(){
+  document.getElementById('screen-quiz').classList.add('hidden');
+  document.getElementById('screen-result').classList.remove('hidden');
+
+  const total = userAnswers.length;
+  const correct = userAnswers.filter(a=>a.isCorrect).length;
+  const pct = Math.round((correct/total)*100);
+  const passMark = QUESTIONS[currentLevel].pass;
+
+  document.getElementById('scoreText').textContent = `${pct}%`;
+  document.getElementById('scoreLabel').textContent = `${correct} إجابة صحيحة من ${total} — مستوى ${currentLevel}`;
+
+  const verdictBox = document.getElementById('verdictBox');
+  if(pct >= passMark){
+    verdictBox.className = 'result-verdict verdict-pass';
+    verdictBox.textContent = `🎉 مبروك! لقد اجتزت مستوى ${currentLevel}`;
+  } else {
+    verdictBox.className = 'result-verdict verdict-fail';
+    verdictBox.textContent = `😕 لسه محتاج تذاكر أكتر في مستوى ${currentLevel} — جرب تاني`;
+  }
+
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = '<h3 style="margin-top:20px;">مراجعة الإجابات:</h3>';
+  const items = QUESTIONS[currentLevel].items;
+  userAnswers.forEach(ans=>{
+    const item = items[ans.index];
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `
+      <div class="review-q">${ans.index+1}. ${item.q}</div>
+      ${ans.isCorrect
+        ? `<div class="review-correct">✔ ${item.opts[ans.correct]}</div>`
+        : `<div class="review-your">✘ إجابتك: ${item.opts[ans.chosen]}</div><div class="review-correct">✔ الصحيحة: ${item.opts[ans.correct]}</div>`
+      }
+    `;
+    reviewList.appendChild(div);
+  });
+}
+
+buildLevelsGrid();
+</script>
+</body>
+</html>
